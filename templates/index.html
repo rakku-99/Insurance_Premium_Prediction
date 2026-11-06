@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+
+    <title>Welcome To Insurance Premium Predictor App</title>
+  </head>
+  <body class= "bg-dark">
+      <div class="container">
+          <div class="row">
+              <div class="card mt-50" style="width: 100%; height:100%">
+
+                <div class="card-header">
+                    <div class="col-12" style="text-align: center">
+                        <h2>Welcome to your</h2>
+                        <h1>FREE</h1>
+                        <h2>Health Insurance Premium Predictor App</h2>
+                    </div>
+                </div>
+
+                <div class="card-body">
+
+                    <form method="post" accept-charset="utf-8">
+
+                        <div class="col-10 form-control" style="text-align: left">
+                            <label><b>What is your age?</b></label>
+                            <input class="form-control" id="age" name="age" type="number" min="1" max="130" step="1" required placeholder="Please Enter Your Age (1-130)">
+                        </div>
+
+                        <div class="col-10 form-control" style="text-align: left">
+                            <label><b>What is your gender?</b></label>
+                            <select class="selectpicker form-control" id="sex" name="sex" required>
+                                {% for type in sex %}
+                                <option value="{{ type }}">{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-10 form-control" style="text-align: left">
+                            <label><b>Don't know your BMI? Enter your weight and height (optional)</b></label>
+                            <input class="form-control" id="weight" name="weight" type="number" min="0.1" max="300" step="any" placeholder="Weight in kilograms (0.1-300 kg)">
+                            <input class="form-control" id="height" name="height" type="number" min="50" max="250" step="any" placeholder="Height in centimeters (50-250 cm)">
+                            <small>BMI = weight in kg ÷ (height in meters × height in meters). Enter both values to calculate it automatically.</small>
+                        </div>
+
+                        <div class="col-10 form-control" style="text-align: left">
+                            <label><b>What is your BMI value?</b></label>
+                            <input class="form-control" id="bmi" name="bmi" type="number" min="0.1" max="53.1" step="any" required placeholder="BMI Value (0.1-53.1)">
+                            <p id="healthy-bmi-guidance" class="bmi-guidance bmi-guidance--info" aria-live="polite"></p>
+                            <p id="bmi-model-warning" class="bmi-guidance bmi-guidance--notice" hidden>
+                                Premium estimates for people under 18 are outside the model's adult training data.
+                            </p>
+                            <p id="bmi-status" class="form-feedback form-feedback--neutral" role="status" aria-live="polite">
+                                Enter your BMI, or provide both weight and height.
+                            </p>
+                        </div>
+
+                        <div class="col-10 form-control" style="text-align: left">
+                            <label><b>How many children do you have?</b></label>
+                            <input class="form-control" id="children" name="children" type="number" min="0" max="10" step="1" placeholder="Number of Children (optional)">
+                        </div>
+
+                        <div class="col-10 form-control" style="text-align: left">
+                            <label><b>Do you smoke?</b></label>
+                            <select class="selectpicker form-control" id="smoker" name="smoker" required>
+                                {% for type in smoker %}
+                                <option value="{{ type }}">{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-10 form-control" style="text-align: left">
+                            <label><b>Which region do you belong to?</b></label>
+                            <select class="selectpicker form-control" id="region" name="region" required>
+                                {% for Region in region %}
+                                <option value="{{ Region }}">{{ Region }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-10 form-control" style="text-align: center">
+                            <button class="btn btn-primary form-control" type="submit">Your annual premium would be:</button>
+                        </div>
+
+                    </form>
+
+                    <br>
+
+                    <div class="row">
+                        <div class="col-12" style="text-align: center">
+                            <h3><span id="prediction"></span></h3>
+                        </div>
+                    </div>
+                </div>
+              </div>
+          </div>>
+      </div>
+    <script>
+        var weightInput = document.getElementById("weight");
+        var heightInput = document.getElementById("height");
+        var bmiInput = document.getElementById("bmi");
+        var bmiStatus = document.getElementById("bmi-status");
+        var ageInput = document.getElementById("age");
+        var sexInput = document.getElementById("sex");
+        var healthyBmiGuidance = document.getElementById("healthy-bmi-guidance");
+        var bmiModelWarning = document.getElementById("bmi-model-warning");
+        var defaultBmiStatus = "Enter your BMI, or provide both weight and height.";
+        var pediatricBmiRanges = {
+            female: {
+                2: [14.4, 18.0], 3: [14.0, 17.2], 4: [13.7, 16.8],
+                5: [13.5, 16.8], 6: [13.4, 17.1], 7: [13.4, 17.6],
+                8: [13.5, 18.3], 9: [13.7, 19.1], 10: [14.0, 19.9],
+                11: [14.4, 20.8], 12: [14.8, 21.7], 13: [15.3, 22.5],
+                14: [15.8, 23.3], 15: [16.3, 24.0], 16: [16.8, 24.6],
+                17: [17.2, 25.2], 18: [17.5, 25.7], 19: [17.8, 26.1]
+            },
+            male: {
+                2: [14.7, 18.2], 3: [14.3, 17.4], 4: [14.0, 16.9],
+                5: [13.8, 16.8], 6: [13.7, 17.0], 7: [13.7, 17.4],
+                8: [13.8, 17.9], 9: [14.0, 18.6], 10: [14.2, 19.4],
+                11: [14.5, 20.2], 12: [15.0, 21.0], 13: [15.4, 21.8],
+                14: [16.0, 22.6], 15: [16.5, 23.4], 16: [17.1, 24.2],
+                17: [17.7, 24.9], 18: [18.2, 25.6], 19: [18.7, 26.3]
+            }
+        };
+
+        function updateHealthyBmiGuidance()
+        {
+            if (ageInput.value === "")
+            {
+                healthyBmiGuidance.textContent = "Enter age to see an age-based healthy BMI reference.";
+                healthyBmiGuidance.className = "bmi-guidance bmi-guidance--info";
+                bmiModelWarning.hidden = true;
+                return;
+            }
+
+            var age = Number(ageInput.value);
+            if (!Number.isInteger(age) || age < 1 || age > 130)
+            {
+                healthyBmiGuidance.textContent = "";
+                bmiModelWarning.hidden = !(age >= 1 && age < 18);
+                return;
+            }
+
+            bmiModelWarning.hidden = age >= 18;
+
+            if (age < 2)
+            {
+                healthyBmiGuidance.textContent = "For children under 2, ask a pediatric health professional about growth rather than using BMI-for-age.";
+                healthyBmiGuidance.className = "bmi-guidance bmi-guidance--notice";
+                return;
+            }
+
+            if (age < 20)
+            {
+                var chart = pediatricBmiRanges[String(sexInput.value).toLowerCase()];
+                if (!chart)
+                {
+                    healthyBmiGuidance.textContent = "Select a sex to see the age-based BMI reference.";
+                    healthyBmiGuidance.className = "bmi-guidance bmi-guidance--info";
+                    return;
+                }
+
+                var range = chart[age];
+                healthyBmiGuidance.textContent =
+                    "Approx. CDC healthy-weight reference (age " + age + ", " +
+                    String(sexInput.value).toLowerCase() + " chart): BMI " +
+                    range[0].toFixed(1) + " to below " + range[1].toFixed(1) +
+                    " kg/m² (5th to below 85th percentile). It varies with age in months. " +
+                    "This is guidance only and does not restrict predictions.";
+                healthyBmiGuidance.className = "bmi-guidance bmi-guidance--info";
+                return;
+            }
+
+            healthyBmiGuidance.textContent =
+                "Adult healthy BMI reference: 18.5-24.9 kg/m². Guidance only; this does not restrict predictions.";
+            healthyBmiGuidance.className = "bmi-guidance bmi-guidance--info";
+        }
+
+        function setBmiStatus(message, state)
+        {
+            bmiStatus.textContent = message;
+            bmiStatus.className = "form-feedback form-feedback--" + state;
+        }
+
+        function updateBmi()
+        {
+            var hasWeight = weightInput.value !== "";
+            var hasHeight = heightInput.value !== "";
+            weightInput.setCustomValidity("");
+            heightInput.setCustomValidity("");
+            bmiInput.setCustomValidity("");
+
+            if (hasWeight !== hasHeight)
+            {
+                var message = "Enter both weight and height, or leave both blank.";
+                (hasWeight ? heightInput : weightInput).setCustomValidity(message);
+                setBmiStatus(message, "error");
+                return;
+            }
+
+            if (hasWeight && hasHeight)
+            {
+                var weight = Number(weightInput.value);
+                var height = Number(heightInput.value);
+                if (!Number.isFinite(weight) || weight <= 0 || weight > 300)
+                {
+                    weightInput.setCustomValidity("Weight must be greater than 0 and no more than 300 kg.");
+                    bmiInput.value = "";
+                    setBmiStatus("Weight must be greater than 0 and no more than 300 kg.", "error");
+                    return;
+                }
+                if (!Number.isFinite(height) || height < 50 || height > 250)
+                {
+                    heightInput.setCustomValidity("Height must be between 50 and 250 cm.");
+                    bmiInput.value = "";
+                    setBmiStatus("Height must be between 50 and 250 cm.", "error");
+                    return;
+                }
+                var calculatedBmi = weight / Math.pow(height / 100, 2);
+                if (!Number.isFinite(calculatedBmi) || calculatedBmi <= 0)
+                {
+                    bmiInput.value = "";
+                    bmiInput.setCustomValidity("Calculated BMI must be a finite number greater than 0.");
+                    setBmiStatus("Calculated BMI must be a finite number greater than 0.", "error");
+                    return;
+                }
+                bmiInput.value = calculatedBmi.toFixed(1);
+                if (calculatedBmi > 53.1)
+                {
+                    var message = "Calculated BMI exceeds 53.1. Check the height first; if it is correct, verify the weight.";
+                    heightInput.setCustomValidity(message);
+                    setBmiStatus(message, "error");
+                    return;
+                }
+                setBmiStatus("Calculated BMI: " + calculatedBmi.toFixed(1), "success");
+            }
+            else if (bmiInput.value !== "")
+            {
+                var bmi = Number(bmiInput.value);
+                if (!Number.isFinite(bmi) || bmi <= 0 || bmi > 53.1)
+                {
+                    bmiInput.setCustomValidity("BMI must be greater than 0 and no more than 53.1.");
+                    setBmiStatus("BMI must be greater than 0 and no more than 53.1.", "error");
+                    return;
+                }
+                setBmiStatus("BMI is within the model's supported input range.", "success");
+            }
+            else
+            {
+                setBmiStatus(defaultBmiStatus, "neutral");
+            }
+        }
+
+        weightInput.addEventListener("input", updateBmi);
+        heightInput.addEventListener("input", updateBmi);
+        bmiInput.addEventListener("input", updateBmi);
+        ageInput.addEventListener("input", updateHealthyBmiGuidance);
+        sexInput.addEventListener("change", updateHealthyBmiGuidance);
+        updateHealthyBmiGuidance();
+
+        function send_data()
+        {
+            var fd = new FormData(document.querySelector('form'));
+
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('post', '/predict', true);
+            document.getElementById("prediction").innerHTML = "Wait! Predicting Premium..."
+
+            xhr.onload = function()
+            {
+                if(xhr.status >= 200 && xhr.status < 300)
+                {
+                    document.getElementById("prediction").innerHTML = "Premium: " + xhr.responseText;
+                }
+                else
+                {
+                    document.getElementById("prediction").innerHTML = "Error: " + xhr.responseText;
+                }
+            }
+
+            xhr.send(fd);
+
+        }
+
+        document.querySelector('form').addEventListener('submit', function(event)
+        {
+            event.preventDefault();
+            send_data();
+        });
+
+    </script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-eMNCOe7tC1doHpGoWe/6oMVemdAVTMs2xqW4mwXrXsW0L84Iytr2wi5v2QjrP/xp" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js" integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/" crossorigin="anonymous"></script>
+    -->
+  </body>
+</html>
