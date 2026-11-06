@@ -18,6 +18,15 @@ If you create a different environment, use its `Scripts\python.exe` path instead
 
 If you run the app from VS Code, use **Python: Select Interpreter** and choose the same virtual environment before running `app.py`. The model was saved with scikit-learn 1.2.0; other versions may not be able to load this pickle.
 
+Debug mode is off by default. To enable it for local development in PowerShell, set the flag before starting the app:
+
+```powershell
+$env:FLASK_DEBUG = "1"
+& $python app.py
+```
+
+To turn it off again in the current PowerShell session, run `Remove-Item Env:FLASK_DEBUG`. Do not enable Flask debug mode in a public or production deployment; use a production WSGI server instead.
+
 Open <http://127.0.0.1:1947> in a browser.
 
 ## Files

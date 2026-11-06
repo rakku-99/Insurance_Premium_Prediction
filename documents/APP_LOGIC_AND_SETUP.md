@@ -39,3 +39,5 @@ The pediatric percentile values are derived from the [CDC BMI-for-age data](http
 ## Local environment setup
 
 This project includes a small app-specific `requirements.txt` to avoid installing unrelated notebook and analysis packages. Create the environment outside a OneDrive-synced directory, install those requirements, and run `app.py` from this folder. The trained pickle records scikit-learn 1.2.0; loading it with a different scikit-learn version may fail or behave incompatibly.
+
+Flask debug mode is disabled by default. To enable it only for local development in PowerShell, set `$env:FLASK_DEBUG = "1"` before running `app.py`; use `Remove-Item Env:FLASK_DEBUG` to unset it in that terminal session. Never enable Flask debug mode on a public or production server. Production deployments should use a production WSGI server with debug mode disabled.

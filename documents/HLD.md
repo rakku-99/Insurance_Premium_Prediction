@@ -84,7 +84,7 @@ The cleaned data inspected for this package spans ages 18–64, BMI 16.0–53.1,
 
 ## 7. Operational and security notes
 
-- The packaged `app.py` starts Flask on port 1947 with debug mode enabled for local development. Debug mode must be disabled and a production WSGI server used before public deployment.
+- The packaged `app.py` starts Flask on port 1947 with debug mode disabled by default. Set `FLASK_DEBUG=1` only for local development; never expose the Flask debugger publicly. Use a production WSGI server with debug mode disabled before deployment.
 - Only load the pickle model file distributed with or otherwise trusted by the application; pickle loading can execute code.
 - The current app has no authentication, persistence, or request throttling.
 - The browser provides convenience checks, but the server is the authoritative validation boundary.

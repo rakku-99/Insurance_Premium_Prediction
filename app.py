@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template
 import math
+import os
 import pandas as pd
 import pickle
 
@@ -73,14 +74,6 @@ def predict():
         columns=['age', 'sex', 'bmi', 'children', 'smoker', 'region']))
 
     return str(prediction[0])           
-
-"""Keep debug mode on locally 
-if __name__=="__main__":
-    app.run(debug=True,port=1947)
-
-and off everywhere else:"""
-
-import os
 
 if __name__ == "__main__":
     app.run(debug=os.environ.get("FLASK_DEBUG") == "1", port=1947)

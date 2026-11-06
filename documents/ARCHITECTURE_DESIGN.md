@@ -69,13 +69,14 @@ The prediction endpoint expects these form field names: `age`, `sex`, `weight`, 
 ### Current local topology
 
 - One Python process runs the Flask development server on port 1947.
+- Flask debug mode is off by default; `FLASK_DEBUG=1` enables it for local development only.
 - The browser connects to the local server.
 - CSV and model files are read from the application working directory.
 - The model and dataset are loaded once when `app.py` is imported.
 
 ### Production considerations (not implemented)
 
-- Run behind a production WSGI server and disable Flask debug mode.
+- Run behind a production WSGI server, keep `FLASK_DEBUG` unset, and disable Flask debug mode.
 - Configure model/data paths robustly rather than relying on the current working directory.
 - Pin and test dependencies against the model's scikit-learn version.
 - Add operational logging, health checks, and error monitoring.
@@ -105,7 +106,7 @@ The app uses Flask, pandas, NumPy, and scikit-learn. The model pickle records sc
 - Model uncertainty or confidence intervals are not shown.
 - The premium output is a model estimate and does not replace an insurer's quote.
 - The current file loading expects a trusted local model and CSV to exist.
-- Debug mode in `app.py` is suitable only for local development.
+- The Flask debugger is suitable only for local development and must never be exposed publicly.
 
 ## 9. Related documents
 
